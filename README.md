@@ -2,6 +2,8 @@
 
 DOMjudge のエクスポートから作成したデータを、任意の時刻の順位表として再生する静的 Web サイトです。
 
+[リプレイを見る](https://riantkb.github.io/domjudge-scoreboard-replay/)
+
 ## ディレクトリ
 
 ```text
