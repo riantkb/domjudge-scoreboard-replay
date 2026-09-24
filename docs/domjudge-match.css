@@ -397,7 +397,7 @@ input[type="range"]::-moz-range-thumb {
   background: #fff;
   box-shadow: -1px 0 0 silver inset, 0 2px 0 #000;
   color: #000;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -437,7 +437,7 @@ input[type="range"]::-moz-range-thumb {
   background: #fff;
   box-shadow: -1px 0 0 silver inset, 0 2px 0 #000;
   color: #000;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 700;
   text-align: center;
 }
