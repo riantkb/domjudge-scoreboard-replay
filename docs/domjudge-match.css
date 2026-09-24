@@ -520,9 +520,11 @@ input[type="range"]::-moz-range-thumb {
 }
 
 #scoreboard-table .problem-heading,
-#scoreboard-table .score_cell {
-  width: 4.2em;
-  min-width: 4.2em;
+#scoreboard-table .score_cell,
+#scoreboard-table .summary-problem-cell {
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
   border-right: 0;
 }
 
