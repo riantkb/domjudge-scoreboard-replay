@@ -522,9 +522,8 @@ input[type="range"]::-moz-range-thumb {
 #scoreboard-table .problem-heading,
 #scoreboard-table .score_cell,
 #scoreboard-table .summary-problem-cell {
-  width: 72px;
-  min-width: 72px;
-  max-width: 72px;
+  width: 70px;
+  min-width: 70px;
   border-right: 0;
 }
 
