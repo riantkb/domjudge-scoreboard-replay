@@ -159,6 +159,7 @@ body {
 .clock-block {
   display: flex;
   align-items: center;
+  border-right-color: #dee2e6;
 }
 
 .clock-row {
@@ -246,6 +247,14 @@ body {
 
 .timeline-wrap {
   padding: 8px 14px;
+  border-top-color: #dee2e6;
+}
+
+.timeline-mark {
+  top: -5px;
+  width: 2px;
+  height: 22px;
+  background: #343a40;
 }
 
 input[type="range"] {
@@ -638,6 +647,8 @@ input[type="range"]::-moz-range-thumb {
 
 @media (max-width: 640px) {
   .control-panel { grid-template-columns: 1fr; }
+  .clock-block,
+  .settings-block { border-bottom-color: #dee2e6; }
   .clock-row { flex-wrap: wrap; }
   .settings-block { justify-content: flex-start; }
   .hero { align-items: flex-start; flex-direction: column; }
