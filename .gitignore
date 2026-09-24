@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+
+# Keep original DOMjudge exports outside the published site and Git history.
+event-feed.ndjson
+scoreboard.json

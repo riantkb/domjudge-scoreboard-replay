@@ -1,0 +1,167 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>DOMjudge Scoreboard Replay</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="domjudge-match.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="hero">
+        <h1 class="contest-heading">
+          <label class="visually-hidden" for="contest-select">コンテストを選択</label>
+          <select id="contest-select" aria-label="コンテストを選択" disabled>
+            <option>コンテストを読み込み中…</option>
+          </select>
+        </h1>
+        <div class="hero-meta">
+          <span id="contest-timer" hidden></span>
+          <a
+            class="source-link"
+            href="https://github.com/riantkb/domjudge-scoreboard-replay"
+            aria-label="GitHub でソースコードを見る"
+          >GitHub ↗</a>
+        </div>
+      </header>
+
+      <section class="control-panel" aria-labelledby="time-heading">
+        <div class="clock-block">
+          <div class="clock-row">
+            <label class="section-label" id="time-heading" for="elapsed-input">経過時間</label>
+            <input
+              id="elapsed-input"
+              class="elapsed-input"
+              type="text"
+              inputmode="numeric"
+              value=""
+              aria-label="経過時間。時、分、秒"
+              spellcheck="false"
+              disabled
+            />
+            <span class="wall-clock" id="wall-clock">—</span>
+            <button class="play-button" id="play-button" type="button" disabled>
+              <span class="play-icon" aria-hidden="true">▶</span>
+              <span id="play-label">再生</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <label class="field-label" for="playback-speed">再生速度</label>
+          <select id="playback-speed">
+            <option value="30">30×（競技30秒/秒）</option>
+            <option value="60">60×（競技1分/秒）</option>
+            <option value="120">120×（競技2分/秒）</option>
+            <option value="240" selected>240×（競技4分/秒）</option>
+            <option value="480">480×（競技8分/秒）</option>
+            <option value="960">960×（競技16分/秒）</option>
+          </select>
+          <label class="toggle-row" for="freeze-toggle">
+            <input id="freeze-toggle" type="checkbox" checked />
+            <span class="toggle-track" aria-hidden="true"></span>
+            <span>公開順位表の凍結を再現</span>
+          </label>
+        </div>
+
+        <div class="timeline-wrap">
+          <div class="timeline-labels">
+            <span>START</span>
+            <span id="timeline-freeze-label" hidden></span>
+            <span id="timeline-end-label"></span>
+          </div>
+          <div class="range-shell">
+            <input
+              id="time-range"
+              type="range"
+              min="0"
+              max="0"
+              step="1"
+              value="0"
+              aria-label="経過時間スライダー"
+              disabled
+            />
+            <div class="timeline-mark freeze-mark" id="freeze-mark" hidden></div>
+            <div class="timeline-mark end-mark" id="end-mark" hidden></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scoreboard-section" aria-labelledby="scoreboard-heading">
+        <div class="table-toolbar">
+          <h2 id="scoreboard-heading" class="visually-hidden">順位表</h2>
+          <div class="summary-grid" aria-label="順位表の概要">
+            <div class="summary-card">
+              <span class="summary-label">Teams</span>
+              <strong id="team-count">—</strong>
+            </div>
+            <div class="summary-card accent">
+              <span class="summary-label">Solved</span>
+              <strong id="solved-count">—</strong>
+            </div>
+            <div class="summary-card pending-card">
+              <span class="summary-label">Pending</span>
+              <strong id="pending-count">—</strong>
+            </div>
+          </div>
+          <div class="toolbar-actions">
+            <label class="search-box">
+              <span aria-hidden="true">⌕</span>
+              <input
+                id="team-filter"
+                type="search"
+                placeholder="チーム名・所属で絞り込み"
+                aria-label="チーム名または所属で絞り込み"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="loading-state" id="loading-state">
+            <div class="loader" aria-hidden="true"></div>
+            <strong>順位表データを読み込んでいます</strong>
+          </div>
+          <div class="error-state" id="error-state" hidden>
+            <strong>データを読み込めませんでした</strong>
+            <p id="error-message"></p>
+            <p>ページを再読み込みしてください。解決しない場合はサイト管理者に連絡してください。</p>
+          </div>
+          <div class="table-scroll" id="table-scroll" hidden>
+            <table id="scoreboard-table" class="scoreboard desktop-scoreboard">
+              <thead id="scoreboard-head"></thead>
+              <tbody id="scoreboard-body"></tbody>
+              <tfoot id="scoreboard-summary"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <table class="scoreboard scorelegend" aria-label="セルの色">
+          <thead><tr><th>Cell colours</th></tr></thead>
+          <tbody>
+            <tr><td class="score_correct score_first">Solved first</td></tr>
+            <tr><td class="score_correct">Solved</td></tr>
+            <tr><td class="score_incorrect">Tried, incorrect</td></tr>
+            <tr><td class="score_pending">Tried, pending</td></tr>
+            <tr><td>Untried</td></tr>
+          </tbody>
+        </table>
+        <p class="table-note">
+          時刻はコンテスト開始からの経過分です。順位は正解数、総時間、最後の正解時刻の順で計算します。
+          濃い緑のセルは First to Solve です。
+        </p>
+      </section>
+    </main>
+
+    <div id="sticky-scoreboard-header" class="sticky-scoreboard-header" aria-hidden="true" hidden>
+      <table id="sticky-scoreboard-table" class="scoreboard desktop-scoreboard">
+        <thead id="sticky-scoreboard-head"></thead>
+      </table>
+    </div>
+
+    <script src="replay.js"></script>
+  </body>
+</html>
