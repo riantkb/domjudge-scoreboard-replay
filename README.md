@@ -32,13 +32,17 @@ python3 tools/serve.py
 
 DOMjudge のエクスポートディレクトリに `event-feed.ndjson` と `scoreboard.json` を用意し、次を実行します。
 
+event-feed が残っていない場合は、同じエクスポートディレクトリに `contest.json`、`judgement-types.json`、`judgements.json`、`problems.json`、`scoreboard.json`、`submissions.json`、`teams.json` を用意します。
+
 ```console
 python3 tools/build_replay_data.py --contest /path/to/export-directory
 ```
 
-大会名から ID を作り、`docs/data/<ID>.json` と `docs/data/contests.manifest.json` を更新します。大会一覧のファイル名には ID に使えない `.` を含めているため、`contests` も大会 ID として使えます。既存の大会は保持されます。`--contest` は複数回指定できます。大会名から作る ID が重複するときは `--contest ID=/path/to/export-directory` で指定してください。大会を削除するときは対応する JSON を `docs/data/` から取り除き、残す大会を指定して生成コマンドを再実行します。
+`contest.json` には contest エンドポイントと同じ階層・項目名を使います。開始・終了の実時刻は `scoreboard.json` の `state` を優先します。凍結なしは `"scoreboard_freeze_duration": null` と表します。contest の応答が別のファイル名で保存されている場合は、`--contest-json /path/to/file.json` で指定できます。これらの元データはリポジトリに追加しないでください。
 
-公開用 JSON には表示対象チームの名前・所属、問題の表示情報、競技中の提出時刻・判定完了時刻・得点計算に必要な結果だけが入ります。元のチーム ID、提出 ID、ソースコードは含めません。未使用の初期アカウントは生成時に除外します。画面では判定済みの提出を反映し、公開順位表の凍結は切り替えられます。「判定完了」は対象提出の判定が出揃ったことを表し、DOMjudge での正式な結果確定を意味しません。
+大会名から ID を作り、`docs/data/<ID>.json` と `docs/data/contests.manifest.json` を更新します。大会一覧は開始日時の新しい順に並び、URL で大会を指定しなければ最新の大会を開きます。既存の大会は保持されます。`--contest` は複数回指定できます。大会名から作る ID が重複するときは `--contest ID=/path/to/export-directory` で指定してください。大会を削除するときは対応する JSON を `docs/data/` から取り除き、残す大会を指定して生成コマンドを再実行します。
+
+公開用 JSON には表示対象チームの名前・所属、問題の表示情報、競技中の提出時刻・判定完了時刻・得点計算に必要な結果だけが入ります。元のチーム ID、提出 ID、ソースコードは含めません。未使用の初期アカウントは生成時に除外します。画面では判定済みの提出を反映し、凍結がある大会では公開順位表の凍結を切り替えられます。「判定完了」は対象提出の判定が出揃ったことを表し、DOMjudge での正式な結果確定を意味しません。
 
 ## ライセンス
 

@@ -78,6 +78,54 @@ def read_event_feed(path: Path) -> dict:
     return {"contest": contest, "state": state, **objects}
 
 
+def read_snapshot_export(source_dir: Path, contest_path: Path) -> dict:
+    """Read the same final objects from API snapshots when the feed is absent."""
+    contest = read_json(contest_path)
+    required_contest_fields = {
+        "name", "scoreboard_type", "start_time", "end_time",
+        "penalty_time", "scoreboard_freeze_duration",
+    }
+    if (not isinstance(contest, dict)
+            or not required_contest_fields <= contest.keys()
+            or not isinstance(contest["name"], str) or not contest["name"].strip()
+            or not isinstance(contest["penalty_time"], int) or isinstance(contest["penalty_time"], bool)
+            or contest["penalty_time"] < 0):
+        raise ValueError("contest の大会名・採点方式・ペナルティ時間・凍結設定が正しくありません")
+    timestamp(contest["start_time"])
+    timestamp(contest["end_time"])
+    freeze_duration = contest["scoreboard_freeze_duration"]
+    if freeze_duration is not None:
+        duration_ms(freeze_duration)
+    type_records = read_json(source_dir / "judgement-types.json")
+    if (not isinstance(type_records, list) or not type_records
+            or any(not isinstance(record, dict)
+                   or not isinstance(record.get("id"), str) or not record["id"]
+                   or not isinstance(record.get("solved"), bool)
+                   or not isinstance(record.get("penalty"), bool)
+                   for record in type_records)):
+        raise ValueError("judgement-types.json の形式が正しくありません")
+    judgement_types = {record["id"]: record for record in type_records}
+    if len(judgement_types) != len(type_records):
+        raise ValueError("judgement-types.json に重複する ID があります")
+
+    state = read_json(source_dir / "scoreboard.json").get("state")
+    if not isinstance(state, dict) or not state.get("started") or not state.get("ended"):
+        raise ValueError("scoreboard.json に開始・終了時刻がありません")
+    objects = {}
+    for name in ("teams", "problems", "submissions", "judgements"):
+        records = read_json(source_dir / f"{name}.json")
+        if not isinstance(records, list):
+            raise ValueError(f"{name}.json は配列である必要があります")
+        if any(not isinstance(record, dict) or not isinstance(record.get("id"), str)
+               or not record["id"] for record in records):
+            raise ValueError(f"{name}.json に ID のない項目があります")
+        by_id = {record["id"]: record for record in records}
+        if len(by_id) != len(records):
+            raise ValueError(f"{name}.json に重複する ID があります")
+        objects[name] = by_id
+    return {"contest": contest, "state": state, "judgement-types": judgement_types, **objects}
+
+
 def is_unused_account(team: dict, submitted_team_ids: set[str]) -> bool:
     """Exclude accounts with no submissions and no customized display name."""
     if team["id"] in submitted_team_ids:
@@ -87,8 +135,13 @@ def is_unused_account(team: dict, submitted_team_ids: set[str]) -> bool:
     return not display_name or display_name == name == team["id"]
 
 
-def build_replay_data(source_dir: Path) -> dict:
-    feed = read_event_feed(source_dir / "event-feed.ndjson")
+def build_replay_data(
+    source_dir: Path,
+    contest_path: Path | None = None,
+) -> dict:
+    feed_path = source_dir / "event-feed.ndjson"
+    feed = (read_snapshot_export(source_dir, contest_path or source_dir / "contest.json")
+            if contest_path or not feed_path.is_file() else read_event_feed(feed_path))
     contest = feed["contest"]
     judgement_types = feed["judgement-types"]
     if contest.get("scoreboard_type") != "pass-fail":
@@ -269,12 +322,18 @@ def main() -> None:
         help="追加または再生成する大会のエクスポートディレクトリ（複数指定可）。ID は既定で大会名から生成します",
     )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--contest-json", type=Path,
+        help="contest エンドポイントの JSON（通常は DIR/contest.json を自動で使用）",
+    )
     args = parser.parse_args()
+    if args.contest_json and len(args.contest) != 1:
+        parser.error("--contest-json を使う場合は --contest を1回だけ指定してください")
 
     # Build first so a contest ID can be derived from the actual contest name.
     replay_data = []
     for requested_id, source_dir in args.contest:
-        data = build_replay_data(source_dir)
+        data = build_replay_data(source_dir, args.contest_json)
         contest_id = requested_id or slugify_contest_name(data["contest"]["name"])
         replay_data.append((contest_id, data))
     ids = [contest_id for contest_id, _ in replay_data]
@@ -298,7 +357,15 @@ def main() -> None:
         contests[contest_id] = {"id": contest_id, "name": data["contest"]["name"], "file": filename}
         print(f"{output}: {len(data['teams'])} teams, {len(data['problems'])} problems, {len(data['attempts'])} attempts")
     manifest = args.output_dir / MANIFEST_FILENAME
-    write_json(manifest, {"contests": list(contests.values())})
+    ordered_contests = sorted(
+        contests.values(),
+        key=lambda contest: (
+            timestamp(read_json(args.output_dir / contest["file"])["contest"]["start"]),
+            contest["id"],
+        ),
+        reverse=True,
+    )
+    write_json(manifest, {"contests": ordered_contests})
     print(f"{manifest}: {len(contests)} contests")
 
 

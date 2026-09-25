@@ -276,6 +276,7 @@
     endMark: document.querySelector("#end-mark"),
     freezeMark: document.querySelector("#freeze-mark"),
     freezeToggle: document.querySelector("#freeze-toggle"),
+    freezeToggleRow: document.querySelector("#freeze-toggle").closest(".toggle-row"),
     loadingState: document.querySelector("#loading-state"),
     pendingCard: document.querySelector(".pending-card"),
     pendingCount: document.querySelector("#pending-count"),
@@ -779,6 +780,8 @@
       state.freezeMs = contest.freeze_ms === null
         ? null
         : state.startMs + contest.freeze_ms;
+      elements.freezeToggleRow.hidden = state.freezeMs === null;
+      elements.freezeToggle.disabled = state.freezeMs === null;
       state.penaltyMinutes = contest.penalty_minutes;
       const clockZone = contestClockZone(contest.start);
       state.clockOffsetMinutes = clockZone.offsetMinutes;
