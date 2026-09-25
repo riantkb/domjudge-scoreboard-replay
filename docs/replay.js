@@ -610,6 +610,7 @@
       return;
     }
     if (state.playbackLastFrameMs !== null) {
+      // RAF may pause in a hidden tab; include that interval when it resumes.
       const realSeconds = (frameMs - state.playbackLastFrameMs) / 1000;
       const speed = elements.playbackSpeed.value === "custom"
         ? state.customSpeed : Number(elements.playbackSpeed.value);
@@ -646,7 +647,7 @@
     if (state.elapsedSeconds >= state.maxSeconds) setElapsed(0);
     state.playing = true;
     state.playbackElapsedSeconds = state.elapsedSeconds;
-    state.playbackLastFrameMs = null;
+    state.playbackLastFrameMs = performance.now();
     state.playbackLastRenderMs = null;
     elements.playButton.classList.add("playing");
     elements.playIcon.textContent = "Ⅱ";
@@ -700,7 +701,7 @@
       if (!state.seeking) return;
       state.seeking = false;
       state.playbackElapsedSeconds = state.elapsedSeconds;
-      state.playbackLastFrameMs = null;
+      state.playbackLastFrameMs = performance.now();
     };
     window.addEventListener("pointerup", finishSeeking);
     window.addEventListener("pointercancel", finishSeeking);
@@ -708,7 +709,7 @@
       setElapsed(Number(event.target.value));
       if (state.playing) {
         state.playbackElapsedSeconds = state.elapsedSeconds;
-        state.playbackLastFrameMs = null;
+        state.playbackLastFrameMs = performance.now();
       }
     });
     elements.elapsedInput.addEventListener("change", commitElapsedInput);
@@ -733,7 +734,10 @@
       observer.observe(elements.tableScroll);
     }
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopPlayback();
+      if (document.hidden || !state.playing) return;
+      if (state.playbackFrame !== null) window.cancelAnimationFrame(state.playbackFrame);
+      state.playbackFrame = null;
+      advancePlayback(performance.now());
     });
   }
 

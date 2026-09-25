@@ -26,6 +26,8 @@ python3 tools/serve.py
 
 ポートを変える場合は `python3 tools/serve.py --port 8080` を使います。
 
+再生中に別のタブへ移っても時間は進みます。タブへ戻ると、その時点の順位表に更新されます。
+
 ## 大会を追加・更新する
 
 DOMjudge のエクスポートディレクトリに `event-feed.ndjson` と `scoreboard.json` を用意し、次を実行します。
