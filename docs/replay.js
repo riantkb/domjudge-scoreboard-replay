@@ -268,6 +268,8 @@
   const elements = {
     contestSelect: document.querySelector("#contest-select"),
     contestTimer: document.querySelector("#contest-timer"),
+    customSpeed: document.querySelector("#custom-speed"),
+    customSpeedField: document.querySelector("#custom-speed-field"),
     elapsedInput: document.querySelector("#elapsed-input"),
     errorMessage: document.querySelector("#error-message"),
     errorState: document.querySelector("#error-state"),
@@ -310,6 +312,7 @@
     clockOffsetMinutes: 0,
     clockZoneLabel: "UTC",
     playing: false,
+    customSpeed: 1,
     seeking: false,
     playbackFrame: null,
     playbackElapsedSeconds: 0,
@@ -608,7 +611,8 @@
     }
     if (state.playbackLastFrameMs !== null) {
       const realSeconds = (frameMs - state.playbackLastFrameMs) / 1000;
-      const speed = Number(elements.playbackSpeed.value);
+      const speed = elements.playbackSpeed.value === "custom"
+        ? state.customSpeed : Number(elements.playbackSpeed.value);
       state.playbackElapsedSeconds = Math.min(
         state.maxSeconds,
         state.playbackElapsedSeconds + realSeconds * speed,
@@ -660,6 +664,30 @@
     setElapsed(parsed);
   }
 
+  function syncCustomSpeedField() {
+    const custom = elements.playbackSpeed.value === "custom";
+    elements.customSpeedField.hidden = !custom;
+    elements.customSpeed.disabled = !custom;
+    if (custom) {
+      elements.customSpeed.focus();
+      elements.customSpeed.select();
+    }
+  }
+
+  function updateCustomSpeed() {
+    const speed = elements.customSpeed.valueAsNumber;
+    const valid = Number.isFinite(speed) && speed > 0;
+    elements.customSpeed.setAttribute("aria-invalid", String(!valid));
+    if (valid) state.customSpeed = speed;
+  }
+
+  function commitCustomSpeed() {
+    if (elements.customSpeed.getAttribute("aria-invalid") === "true") {
+      elements.customSpeed.value = String(state.customSpeed);
+      elements.customSpeed.setAttribute("aria-invalid", "false");
+    }
+  }
+
   function bindEvents() {
     elements.contestSelect.addEventListener("change", () => {
       const contest = state.contests.find((item) => item.id === elements.contestSelect.value);
@@ -691,6 +719,9 @@
       }
     });
     elements.playButton.addEventListener("click", togglePlayback);
+    elements.playbackSpeed.addEventListener("change", syncCustomSpeedField);
+    elements.customSpeed.addEventListener("input", updateCustomSpeed);
+    elements.customSpeed.addEventListener("change", commitCustomSpeed);
     elements.freezeToggle.addEventListener("change", renderScoreboard);
     elements.teamFilter.addEventListener("input", applyTeamFilter);
     window.addEventListener("scroll", scheduleStickyHeader, { passive: true });

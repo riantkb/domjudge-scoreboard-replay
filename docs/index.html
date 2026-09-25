@@ -53,13 +53,28 @@
         <div class="settings-block">
           <label class="field-label" for="playback-speed">再生速度</label>
           <select id="playback-speed">
+            <option value="1">1×（実時間）</option>
             <option value="30">30×（競技30秒/秒）</option>
             <option value="60">60×（競技1分/秒）</option>
             <option value="120">120×（競技2分/秒）</option>
             <option value="240" selected>240×（競技4分/秒）</option>
             <option value="480">480×（競技8分/秒）</option>
             <option value="960">960×（競技16分/秒）</option>
+            <option value="custom">カスタム</option>
           </select>
+          <div class="custom-speed" id="custom-speed-field" hidden>
+            <input
+              id="custom-speed"
+              type="number"
+              inputmode="decimal"
+              step="any"
+              value="1"
+              aria-label="再生倍率（0 より大きい数）"
+              title="0 より大きい倍率を入力"
+              disabled
+            />
+            <span aria-hidden="true">×</span>
+          </div>
           <label class="toggle-row" for="freeze-toggle">
             <input id="freeze-toggle" type="checkbox" checked />
             <span class="toggle-track" aria-hidden="true"></span>

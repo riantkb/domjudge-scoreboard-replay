@@ -212,6 +212,38 @@ body {
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.18);
 }
 
+.custom-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #212529;
+}
+
+.custom-speed[hidden] {
+  display: none;
+}
+
+.custom-speed input {
+  width: 76px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  color: #212529;
+  background: #fff;
+  font-size: 0.84rem;
+}
+
+.custom-speed input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.18);
+}
+
+.custom-speed input[aria-invalid="true"] {
+  border-color: #dc3545;
+}
+
 .toggle-row {
   color: #495057;
 }
