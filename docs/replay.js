@@ -322,6 +322,7 @@
     result: null,
     stickyFrame: null,
     renderedHeaderData: null,
+    renderedRows: new Map(),
     contests: [],
     loadSerial: 0,
   };
@@ -459,6 +460,30 @@
       </td>`;
   }
 
+  function rowSignature(row) {
+    return JSON.stringify([
+      row.score.numSolved,
+      row.score.totalTime,
+      ...row.problems.map((cell) => [
+        cell.solved, cell.solveTime, cell.numJudged, cell.numPending,
+        cell.wrongAttempts, cell.firstToSolve,
+      ]),
+    ]);
+  }
+
+  function rowMarkup(row) {
+    return `
+      <td class="rank-col">${row.rank}</td>
+      <td class="scoreaf"></td>
+      <td class="team-col" title="${escapeHtml(row.team.display)}">
+        <span class="team-name">${escapeHtml(row.team.display)}</span>
+        <span class="team-affiliation" title="${escapeHtml(row.team.affiliation || "")}">${escapeHtml(row.team.affiliation || "")}</span>
+      </td>
+      <td class="score-col">${row.score.numSolved}</td>
+      <td class="time-col">${row.score.totalTime}</td>
+      ${row.problems.map(cellMarkup).join("")}`;
+  }
+
   function renderTable(result) {
     if (state.renderedHeaderData !== state.data) {
       elements.scoreboardHead.innerHTML = `
@@ -477,26 +502,37 @@
         </tr>`;
       elements.stickyHead.innerHTML = elements.scoreboardHead.innerHTML;
       state.renderedHeaderData = state.data;
+      state.renderedRows = new Map();
+      elements.scoreboardBody.replaceChildren();
     }
 
-    elements.scoreboardBody.innerHTML = result.rows
-      .map(
-        (row) => `
-          <tr data-search="${escapeHtml(
-            `${row.team.display} ${row.team.affiliation || ""}`.toLocaleLowerCase("ja"),
-          )}">
-            <td class="rank-col">${row.rank}</td>
-            <td class="scoreaf"></td>
-            <td class="team-col" title="${escapeHtml(row.team.display)}">
-              <span class="team-name">${escapeHtml(row.team.display)}</span>
-              <span class="team-affiliation" title="${escapeHtml(row.team.affiliation || "")}">${escapeHtml(row.team.affiliation || "")}</span>
-            </td>
-            <td class="score-col">${row.score.numSolved}</td>
-            <td class="time-col">${row.score.totalTime}</td>
-            ${row.problems.map(cellMarkup).join("")}
-          </tr>`,
-      )
-      .join("");
+    let position = elements.scoreboardBody.firstElementChild;
+    for (const row of result.rows) {
+      let entry = state.renderedRows.get(row.team.id);
+      if (!entry) {
+        const element = document.createElement("tr");
+        element.dataset.search =
+          `${row.team.display} ${row.team.affiliation || ""}`.toLocaleLowerCase("ja");
+        const query = elements.teamFilter.value.trim().toLocaleLowerCase("ja");
+        element.hidden = Boolean(query && !element.dataset.search.includes(query));
+        entry = { element, signature: null, rank: null };
+        state.renderedRows.set(row.team.id, entry);
+      }
+      const signature = rowSignature(row);
+      if (entry.signature !== signature) {
+        entry.element.innerHTML = rowMarkup(row);
+        entry.signature = signature;
+        entry.rank = row.rank;
+      } else if (entry.rank !== row.rank) {
+        entry.element.firstElementChild.textContent = String(row.rank);
+        entry.rank = row.rank;
+      }
+      if (entry.element === position) {
+        position = position.nextElementSibling;
+      } else {
+        elements.scoreboardBody.insertBefore(entry.element, position);
+      }
+    }
     elements.scoreboardSummary.innerHTML = `
       <tr class="score-summary-row">
         <td class="scoresummary" title="Summary" colspan="3">Summary</td>
@@ -505,7 +541,6 @@
         ${result.problems.map((problem, index) =>
           summaryCellMarkup(problem, result.problemStats[index])).join("")}
       </tr>`;
-    applyTeamFilter();
     scheduleStickyHeader();
   }
 
